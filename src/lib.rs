@@ -217,22 +217,27 @@ where
     }
 }
 
+use pin_project::{pin_project, pinned_drop};
+
+#[pin_project(PinnedDrop)]
 pub struct StreamLog<B> {
     logger: Logger,
     is_exclude: bool,
+    #[pin]
     body: ResponseBody<B>,
     size: usize,
     timestamp: DateTime<Utc>,
 }
 
-impl<B> Drop for StreamLog<B> {
-    fn drop(&mut self) {
+#[pinned_drop]
+impl<B> PinnedDrop for StreamLog<B> {
+    fn drop(self: Pin<&mut Self>) {
         if !self.is_exclude {
             let response_time = Utc::now() - self.timestamp;
             let response_time = response_time.num_milliseconds();
             info!(self.logger, "-"; o!("bytes_sent" => self.size), "response_time" => response_time);
         }
-    }
+}
 }
 
 impl<B: MessageBody> MessageBody for StreamLog<B> {
@@ -240,10 +245,14 @@ impl<B: MessageBody> MessageBody for StreamLog<B> {
         self.body.size()
     }
 
-    fn poll_next(&mut self, cx: &mut Context) -> Poll<Option<Result<Bytes, Error>>> {
-        match self.body.poll_next(cx) {
+    fn poll_next(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Option<Result<Bytes, Error>>> {
+        let this = self.project();
+        match this.body.poll_next(cx) {
             Poll::Ready(Some(Ok(chunk))) => {
-                self.size += chunk.len();
+                *this.size += chunk.len();
                 Poll::Ready(Some(Ok(chunk)))
             }
             val => val,

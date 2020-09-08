@@ -14,12 +14,18 @@ description = "structured access-logging for actix-web utilizing slog, thus enab
 [dependencies]
 chrono = "0.4.13"
 futures = "0.3.5"
-actix-web = "2.0.0"
+actix-web = { version = "=3.0.0-alpha.1" }
+actix-rt = "=1.0.0"
+actix-server = "=1.0.0"
+actix-testing = "=1.0.0"
+# actix-utils = "1.0"
+actix-http = "=2.0.0-alpha.2"
+actix-connect = "=2.0.0-alpha.1"
 pin-project = "0.4.22"
 slog = "2.5.2"
 
 [dev-dependencies]
-actix-rt = "1.1.1"
+# actix-rt = "1.1.1"
 slog-json = "2.3.0"
 slog-term = "2.6.0"
 slog-async = "2.5.0"
